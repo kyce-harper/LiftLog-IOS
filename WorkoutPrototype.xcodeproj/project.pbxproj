@@ -13,6 +13,10 @@
 		69AA47C42EA1F73A002753EA /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 69AA47C32EA1F73A002753EA /* Preview Assets.xcassets */; };
 		69AA47C62EA1F73A002753EA /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69AA47C52EA1F73A002753EA /* Persistence.swift */; };
 		69AA47C92EA1F73A002753EA /* WorkoutPrototype.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 69AA47C72EA1F73A002753EA /* WorkoutPrototype.xcdatamodeld */; };
+		69AA47D02EA20671002753EA /* TemplateListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69AA47CF2EA20671002753EA /* TemplateListView.swift */; };
+		69AA47D22EA206D5002753EA /* TemplateBuilderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69AA47D12EA206D5002753EA /* TemplateBuilderView.swift */; };
+		69AA47D42EA20AA7002753EA /* ActiveWorkoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69AA47D32EA20AA7002753EA /* ActiveWorkoutView.swift */; };
+		69AA47D62EA211AD002753EA /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69AA47D52EA211AD002753EA /* HistoryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +27,10 @@
 		69AA47C32EA1F73A002753EA /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		69AA47C52EA1F73A002753EA /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		69AA47C82EA1F73A002753EA /* WorkoutPrototype.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = WorkoutPrototype.xcdatamodel; sourceTree = "<group>"; };
+		69AA47CF2EA20671002753EA /* TemplateListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateListView.swift; sourceTree = "<group>"; };
+		69AA47D12EA206D5002753EA /* TemplateBuilderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateBuilderView.swift; sourceTree = "<group>"; };
+		69AA47D32EA20AA7002753EA /* ActiveWorkoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveWorkoutView.swift; sourceTree = "<group>"; };
+		69AA47D52EA211AD002753EA /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -39,6 +47,7 @@
 		69AA47B02EA1F739002753EA = {
 			isa = PBXGroup;
 			children = (
+				69AA47D52EA211AD002753EA /* HistoryView.swift */,
 				69AA47BB2EA1F739002753EA /* WorkoutPrototype */,
 				69AA47BA2EA1F739002753EA /* Products */,
 			);
@@ -61,6 +70,9 @@
 				69AA47C52EA1F73A002753EA /* Persistence.swift */,
 				69AA47C72EA1F73A002753EA /* WorkoutPrototype.xcdatamodeld */,
 				69AA47C22EA1F73A002753EA /* Preview Content */,
+				69AA47CF2EA20671002753EA /* TemplateListView.swift */,
+				69AA47D12EA206D5002753EA /* TemplateBuilderView.swift */,
+				69AA47D32EA20AA7002753EA /* ActiveWorkoutView.swift */,
 			);
 			path = WorkoutPrototype;
 			sourceTree = "<group>";
@@ -143,7 +155,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				69AA47D22EA206D5002753EA /* TemplateBuilderView.swift in Sources */,
+				69AA47D62EA211AD002753EA /* HistoryView.swift in Sources */,
 				69AA47C62EA1F73A002753EA /* Persistence.swift in Sources */,
+				69AA47D42EA20AA7002753EA /* ActiveWorkoutView.swift in Sources */,
+				69AA47D02EA20671002753EA /* TemplateListView.swift in Sources */,
 				69AA47BF2EA1F739002753EA /* ContentView.swift in Sources */,
 				69AA47C92EA1F73A002753EA /* WorkoutPrototype.xcdatamodeld in Sources */,
 				69AA47BD2EA1F739002753EA /* WorkoutPrototypeApp.swift in Sources */,
