@@ -19,14 +19,11 @@ struct ContentView: View {
                     Label("Plan", systemImage: "dumbbell.fill")
                 }
             
-            // MARK: - Tab 2: Workout History (Placeholder)
-            NavigationView {
-                Text("This will show a history of all completed LoggedSets.")
-                    .navigationTitle("History")
-            }
-            .tabItem {
-                Label("History", systemImage: "calendar")
-            }
+            // MARK: - Tab 2: Workout History (Active)
+            HistoryView()
+                .tabItem {
+                    Label("History", systemImage: "calendar")
+                }
         }
         // Launch the ActiveWorkoutView as a full screen cover when the state changes
         .fullScreenCover(isPresented: $showingActiveWorkout) {

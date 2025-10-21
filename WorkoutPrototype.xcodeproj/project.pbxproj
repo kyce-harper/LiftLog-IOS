@@ -47,7 +47,6 @@
 		69AA47B02EA1F739002753EA = {
 			isa = PBXGroup;
 			children = (
-				69AA47D52EA211AD002753EA /* HistoryView.swift */,
 				69AA47BB2EA1F739002753EA /* WorkoutPrototype */,
 				69AA47BA2EA1F739002753EA /* Products */,
 			);
@@ -64,6 +63,7 @@
 		69AA47BB2EA1F739002753EA /* WorkoutPrototype */ = {
 			isa = PBXGroup;
 			children = (
+				69AA47D52EA211AD002753EA /* HistoryView.swift */,
 				69AA47BC2EA1F739002753EA /* WorkoutPrototypeApp.swift */,
 				69AA47BE2EA1F739002753EA /* ContentView.swift */,
 				69AA47C02EA1F73A002753EA /* Assets.xcassets */,
