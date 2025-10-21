@@ -8,6 +8,7 @@ struct PersistenceController {
     static let shared = PersistenceController()
 
     // Configuration used only for Xcode Previews (in-memory store with sample data)
+    // Configuration used only for Xcode Previews (in-memory store with sample data)
     static var preview: PersistenceController = {
         let controller = PersistenceController(inMemory: true)
         let context = controller.container.viewContext
@@ -19,31 +20,55 @@ struct PersistenceController {
         pushDay.name = "Push Day (Template)"
         pushDay.dateCreated = Date().addingTimeInterval(-86400 * 30) // 30 days ago
 
-        // 2. Add Exercises to the Template
+        // 2. Create two Workout Sessions (This is the crucial fix!)
+        let session1 = WorkoutSession(context: context)
+        session1.dateStarted = Date().addingTimeInterval(-86400 * 7) // 1 week ago
+        session1.dateCompleted = Date().addingTimeInterval(-86400 * 7).addingTimeInterval(3600) // 1 hour later
+        session1.template = pushDay // Link Session to Template
+
+        let session2 = WorkoutSession(context: context)
+        session2.dateStarted = Date().addingTimeInterval(-86400) // 1 day ago
+        session2.dateCompleted = Date().addingTimeInterval(-86400).addingTimeInterval(2700) // 45 minutes later
+        session2.template = pushDay
+
+        // 3. Add Exercises to the Template
         let benchPress = TemplateExercise(context: context)
         benchPress.exerciseName = "Barbell Bench Press"
         benchPress.targetSets = 4
         benchPress.order = 1
-        benchPress.template = pushDay // Link to Template
+        benchPress.template = pushDay
         
         let overheadPress = TemplateExercise(context: context)
         overheadPress.exerciseName = "Overhead Press"
         overheadPress.targetSets = 3
         overheadPress.order = 2
-        overheadPress.template = pushDay // Link to Template
+        overheadPress.template = pushDay
         
-        // 3. Log Historical Sets for Bench Press (Progressive Overload Data)
+        // 4. Log Historical Sets and LINK THEM TO THE SESSIONS
+        
+        // LoggedSet from 1 week ago (linked to session1)
         let oldSet = LoggedSet(context: context)
-        oldSet.dateLogged = Date().addingTimeInterval(-86400 * 7) // 1 week ago
+        oldSet.dateLogged = session1.dateCompleted // Use session completion time
         oldSet.weight = 135.0
         oldSet.reps = 10
-        oldSet.exercise = benchPress // Link to TemplateExercise
+        oldSet.exercise = benchPress
+        oldSet.session = session1 // 👈 NEW: Link to Session 1
         
+        // LoggedSet from 1 day ago (linked to session2)
         let recentSet = LoggedSet(context: context)
-        recentSet.dateLogged = Date().addingTimeInterval(-86400) // 1 day ago
-        recentSet.weight = 140.0 // Progressive overload!
+        recentSet.dateLogged = session2.dateCompleted
+        recentSet.weight = 140.0
         recentSet.reps = 8
-        recentSet.exercise = benchPress // Link to TemplateExercise
+        recentSet.exercise = benchPress
+        recentSet.session = session2 // 👈 NEW: Link to Session 2
+        
+        // LoggedSet for Overhead Press (linked to session2)
+        let opSet = LoggedSet(context: context)
+        opSet.dateLogged = session2.dateCompleted!.addingTimeInterval(60) // Logged slightly later
+        opSet.weight = 60.0
+        opSet.reps = 12
+        opSet.exercise = overheadPress
+        opSet.session = session2 // 👈 NEW: Link to Session 2
         
         controller.saveContext()
         return controller
@@ -150,6 +175,54 @@ struct PersistenceController {
         
         // ESTABLISH THE RELATIONSHIP (The key to progressive tracking)
         newSet.exercise = exercise
+        
+        saveContext()
+    }
+    
+}
+// MARK: - Core Data Logic for WorkoutSession
+
+extension PersistenceController {
+    
+    /// Creates a new WorkoutSession linked to the template and saves the context.
+    /// This should be called when the SessionLoggingView appears.
+    /// - Parameter template: The WorkoutTemplate used for this session.
+    /// - Returns: The newly created WorkoutSession object.
+    func startNewSession(for template: WorkoutTemplate) -> WorkoutSession {
+        let context = container.viewContext
+        // NOTE: This requires the Core Data entity 'WorkoutSession' to exist.
+        let newSession = WorkoutSession(context: context)
+        
+        newSession.dateStarted = Date()
+        newSession.template = template // Link to the template used
+        
+        saveContext()
+        return newSession
+    }
+    
+    /// Updates an existing session by setting its completion time.
+    /// - Parameter session: The WorkoutSession to mark as complete.
+    func completeSession(session: WorkoutSession) {
+        session.dateCompleted = Date()
+        saveContext()
+    }
+    
+    /// Creates and links a new LoggedSet to a specific TemplateExercise AND a specific WorkoutSession.
+    /// - Parameter exercise: The exercise definition the set belongs to.
+    /// - Parameter weight: The weight lifted.
+    /// - Parameter reps: The repetitions performed.
+    /// - Parameter session: The active WorkoutSession this set belongs to (NEW REQUIREMENT).
+    func logSet(for exercise: TemplateExercise, weight: Double, reps: Int, session: WorkoutSession) {
+        let context = container.viewContext
+        let newSet = LoggedSet(context: context)
+        
+        newSet.dateLogged = Date() // Mark time of logging
+        newSet.weight = weight
+        newSet.reps = Int16(reps)
+        
+        // ESTABLISH RELATIONSHIPS
+        newSet.exercise = exercise
+        newSet.session = session // Link to the current session (The key for history!)
         
         saveContext()
     }

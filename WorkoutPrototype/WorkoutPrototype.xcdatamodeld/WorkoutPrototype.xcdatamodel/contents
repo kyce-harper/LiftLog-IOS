@@ -5,6 +5,7 @@
         <attribute name="reps" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="weight" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <relationship name="exercise" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="TemplateExercise" inverseName="loggedSets" inverseEntity="TemplateExercise"/>
+        <relationship name="session" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WorkoutSession" inverseName="loggedSets" inverseEntity="WorkoutSession"/>
     </entity>
     <entity name="TemplateExercise" representedClassName="TemplateExercise" syncable="YES" codeGenerationType="class">
         <attribute name="exerciseName" optional="YES" attributeType="String"/>
@@ -13,9 +14,16 @@
         <relationship name="loggedSets" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="LoggedSet" inverseName="exercise" inverseEntity="LoggedSet"/>
         <relationship name="template" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WorkoutTemplate" inverseName="exercises" inverseEntity="WorkoutTemplate"/>
     </entity>
+    <entity name="WorkoutSession" representedClassName=".WorkoutSession" syncable="YES" codeGenerationType="class">
+        <attribute name="dateCompleted" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="dateStarted" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="loggedSets" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="LoggedSet" inverseName="session" inverseEntity="LoggedSet"/>
+        <relationship name="template" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WorkoutTemplate" inverseName="sessions" inverseEntity="WorkoutTemplate"/>
+    </entity>
     <entity name="WorkoutTemplate" representedClassName="WorkoutTemplate" syncable="YES" codeGenerationType="class">
         <attribute name="dateCreated" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="name" optional="YES" attributeType="String"/>
         <relationship name="exercises" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="TemplateExercise" inverseName="template" inverseEntity="TemplateExercise"/>
+        <relationship name="sessions" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WorkoutSession" inverseName="template" inverseEntity="WorkoutSession"/>
     </entity>
 </model>

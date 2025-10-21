@@ -68,8 +68,6 @@ struct ActiveWorkoutView: View {
     }
 }
 
-// MARK: - SESSION LOGGING VIEW (Revised for Single-Exercise Flow)
-
 struct SessionLoggingView: View {
     @Environment(\.dismiss) var dismiss
     private let persistence = PersistenceController.shared
@@ -77,29 +75,27 @@ struct SessionLoggingView: View {
     let template: WorkoutTemplate
     let dismissParent: DismissAction
     
-    // Timer State
+    // MARK: - Core Data State
+    @State private var activeSession: WorkoutSession? = nil // Holds the new session object
+    
+    // MARK: - UI State
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @State private var timeElapsed: TimeInterval = 0
-    
-    // Flow State: Track which exercise the user is currently on
     @State private var currentExerciseIndex: Int = 0
-    
-    // Logging Inputs
     @State private var currentWeight: String = ""
     @State private var currentReps: String = ""
     
-    // Prepare a sorted array of exercises to access by index
+    // MARK: - Computed Properties
+    
     private var sortedExercises: [TemplateExercise] {
         guard let exercises = template.exercises as? Set<TemplateExercise> else { return [] }
         return exercises.sorted { $0.order < $1.order }
     }
     
-    // Computed property to check if the workout is finished
     private var isWorkoutFinished: Bool {
         currentExerciseIndex >= sortedExercises.count
     }
     
-    // Formatter to display the time interval as H:MM:SS
     private var timeFormatter: DateComponentsFormatter {
         let formatter = DateComponentsFormatter()
         formatter.allowedUnits = [.hour, .minute, .second]
@@ -125,10 +121,8 @@ struct SessionLoggingView: View {
                 if isWorkoutFinished {
                     workoutCompleteView()
                 } else if let exercise = sortedExercises[safe: currentExerciseIndex] {
-                    // Display the single active exercise
                     exerciseLoggingView(for: exercise)
                 } else {
-                    // Should not happen if logic is correct
                     Text("Error loading exercise.")
                 }
                 
@@ -138,15 +132,20 @@ struct SessionLoggingView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Finish") {
-                        // In a robust app, you would save final stats here
-                        dismissParent()
+                        // Action: Complete the session and dismiss
+                        completeAndDismiss()
                     }
                 }
             }
+            // Start/Stopwatch Logic
             .onReceive(timer) { _ in
                 if !isWorkoutFinished {
-                    timeElapsed += 1 // Increment stopwatch
+                    timeElapsed += 1
                 }
+            }
+            // MARK: - NEW: Start the session when the view appears
+            .onAppear {
+                activeSession = persistence.startNewSession(for: template)
             }
         }
     }
@@ -166,7 +165,8 @@ struct SessionLoggingView: View {
                 .font(.title3)
             
             Button("Done") {
-                dismissParent()
+                // Action: Complete the session and dismiss
+                completeAndDismiss()
             }
             .buttonStyle(.borderedProminent)
             .padding(.top, 20)
@@ -186,8 +186,8 @@ struct SessionLoggingView: View {
             Text("Target: \(exercise.targetSets) sets")
                 .font(.title2)
                 .foregroundColor(.secondary)
-                
-            // MARK: - PROGRESSIVE OVERLOAD HINT (Specific Fix)
+            
+            // MARK: - PROGRESSIVE OVERLOAD HINT
             lastPerformanceHint(for: exercise).padding(.top, 10)
             
             // MARK: - LOGGING INTERFACE (Weight/Reps)
@@ -204,7 +204,7 @@ struct SessionLoggingView: View {
                         .padding(.horizontal)
                 }
                 
-                // MARK: - LOG AND ADVANCE BUTTON (Log Once Fix)
+                // MARK: - LOG AND ADVANCE BUTTON
                 Button("Complete Exercise & Advance (\(currentExerciseIndex + 1)/\(sortedExercises.count))") {
                     logFinalPerformance(for: exercise)
                 }
@@ -216,7 +216,6 @@ struct SessionLoggingView: View {
         .padding(.horizontal)
     }
     
-    // Helper view for the progressive overload hint
     @ViewBuilder
     private func lastPerformanceHint(for exercise: TemplateExercise) -> some View {
         if let lastSet = fetchLastPerformance(for: exercise) {
@@ -225,7 +224,6 @@ struct SessionLoggingView: View {
                     .font(.caption)
                     .foregroundColor(.gray)
                 HStack(spacing: 15) {
-                    // Show the specific weight/reps from the single last LoggedSet
                     Text("Weight: \(String(format: "%.1f", lastSet.weight)) kg")
                         .font(.title3)
                         .fontWeight(.medium)
@@ -250,7 +248,15 @@ struct SessionLoggingView: View {
         }
     }
     
-    // MARK: - Core Data Logic
+    // MARK: - Core Data Logic (Modified)
+    
+    /// Helper function to finalize the session and close the full screen cover.
+    private func completeAndDismiss() {
+        if let session = activeSession {
+            persistence.completeSession(session: session)
+        }
+        dismissParent()
+    }
     
     /// Finds the most recent LoggedSet for a given exercise to show prior performance.
     func fetchLastPerformance(for exercise: TemplateExercise) -> LoggedSet? {
@@ -269,13 +275,14 @@ struct SessionLoggingView: View {
     func logFinalPerformance(for exercise: TemplateExercise) {
         guard let weight = Double(currentWeight),
               let reps = Int(currentReps),
+              let session = activeSession, // Get the active session
               reps > 0, weight >= 0 else {
-            print("Invalid weight or reps input.")
+            print("Invalid input or active session is nil. Cannot log set.")
             return
         }
         
-        // 1. LOG THE SINGLE RECORD (Represents final result for the exercise)
-        persistence.logSet(for: exercise, weight: weight, reps: reps)
+        // 1. LOG THE SINGLE RECORD, passing the session
+        persistence.logSet(for: exercise, weight: weight, reps: reps, session: session)
         
         // 2. ADVANCE TO THE NEXT EXERCISE
         withAnimation {
@@ -288,7 +295,7 @@ struct SessionLoggingView: View {
     }
 }
 
-// Extension to safely access array elements
+// Extension to safely access array elements (required by the view)
 fileprivate extension Array {
     subscript (safe index: Int) -> Element? {
         return indices.contains(index) ? self[index] : nil
