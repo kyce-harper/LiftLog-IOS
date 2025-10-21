@@ -11,15 +11,13 @@ struct ContentView: View {
     var body: some View {
         // Use a TabView to structure the app (Templates and History)
         TabView {
-            // MARK: - Tab 1: Template Builder (The main screen)
-            // FIX: TemplateListView requires the startWorkoutAction closure.
-            // This closure sets the state variable to true, launching the fullScreenCover.
+            // Template Builder (The main screen)
             TemplateListView(startWorkoutAction: { showingActiveWorkout = true })
                 .tabItem {
                     Label("Plan", systemImage: "dumbbell.fill")
                 }
             
-            // MARK: - Tab 2: Workout History (Active)
+            // Workout History (Active)
             HistoryView()
                 .tabItem {
                     Label("History", systemImage: "calendar")
@@ -27,8 +25,6 @@ struct ContentView: View {
         }
         // Launch the ActiveWorkoutView as a full screen cover when the state changes
         .fullScreenCover(isPresented: $showingActiveWorkout) {
-            // FIX: ActiveWorkoutView does not take an 'isPresented' argument.
-            // It uses @Environment(\.dismiss) internally.
             ActiveWorkoutView()
         }
     }
