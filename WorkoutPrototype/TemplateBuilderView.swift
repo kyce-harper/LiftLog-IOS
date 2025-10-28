@@ -9,14 +9,10 @@ struct TemplateBuilderView: View {
     
     // State for showing the "Add Exercise" sheet
     @State private var showingAddExerciseSheet = false
-
-    // Fetch the exercises belonging to THIS specific template
-    // We use a manual @FetchRequest inside the body to filter by the template.
-    // However, for simplicity and proper SwiftUI observation of relationships,
-    // we access the relationship directly and sort it manually in the List.
+    // State for editing an existing exercise
+    @State private var editingExercise: TemplateExercise? = nil
 
     var exercises: [TemplateExercise] {
-        // Convert the NSSet relationship to a sorted Swift Array
         let set = template.exercises as? Set<TemplateExercise> ?? []
         return set.sorted { $0.order < $1.order }
     }
@@ -35,10 +31,44 @@ struct TemplateBuilderView: View {
                             .foregroundColor(.secondary)
                     }
                     Spacer()
-                    // Placeholder for the progressive overload hint (Phase 3)
-                    Text("Last: 140x8")
-                        .font(.caption)
-                        .foregroundColor(.green)
+                    // Progressive overload hint: show last logged weight/reps if any
+                    if let last = fetchLastPerformance(for: exercise) {
+                        Text("Last: \(String(format: "%.1f", last.weight)) kg x \(last.reps)")
+                            .font(.caption)
+                            .foregroundColor(.green)
+                    } else {
+                        Text("No history")
+                            .font(.caption)
+                            .foregroundColor(.green)
+                    }
+                }
+                // Swipe actions to Edit or Delete
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button {
+                        editingExercise = exercise
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    .tint(.blue)
+                    
+                    Button(role: .destructive) {
+                        persistence.deleteExercise(exercise: exercise)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+                // Also provide a context menu for iPadOS/macOS style interaction
+                .contextMenu {
+                    Button {
+                        editingExercise = exercise
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    Button(role: .destructive) {
+                        persistence.deleteExercise(exercise: exercise)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
                 }
             }
             .onDelete(perform: deleteExercises)
@@ -61,20 +91,31 @@ struct TemplateBuilderView: View {
             AddExerciseView(template: template, isPresented: $showingAddExerciseSheet)
                 .environment(\.managedObjectContext, viewContext)
         }
+        // Sheet for editing an existing exercise
+        .sheet(item: $editingExercise) { exercise in
+            EditExerciseView(exercise: exercise) {
+                // Dismiss action: set editingExercise to nil
+                editingExercise = nil
+            }
+            .environment(\.managedObjectContext, viewContext)
+        }
     }
     
     // MARK: - CRUD Delete
     
     private func deleteExercises(offsets: IndexSet) {
         withAnimation {
-            // Get the exercises to delete from the sorted array
             let exercisesToDelete = offsets.map { exercises[$0] }
-            
             for exercise in exercisesToDelete {
-                // Use the delete function from the persistence controller
                 persistence.deleteExercise(exercise: exercise)
             }
         }
+    }
+    
+    // MARK: - Last performance helper (mirrors ActiveWorkoutView)
+    private func fetchLastPerformance(for exercise: TemplateExercise) -> LoggedSet? {
+        guard let sets = exercise.loggedSets as? Set<LoggedSet> else { return nil }
+        return sets.sorted { ($0.dateLogged ?? .distantPast) > ($1.dateLogged ?? .distantPast) }.first
     }
 }
 
@@ -106,7 +147,6 @@ struct AddExerciseView: View {
                 
                 Button("Add Exercise to \(template.name ?? "Template")") {
                     if isFormValid {
-                        // Call the PersistenceController function to link the new exercise
                         persistence.addExercise(
                             to: template,
                             name: name,
@@ -130,6 +170,57 @@ struct AddExerciseView: View {
                         isPresented = false
                     }
                 }
+            }
+        }
+    }
+}
+
+// MARK: - Subview for Editing Exercise
+
+struct EditExerciseView: View {
+    @ObservedObject var exercise: TemplateExercise
+    var onDismiss: () -> Void
+    
+    @Environment(\.managedObjectContext) private var viewContext
+    
+    // Local editable state initialized from the exercise
+    @State private var name: String = ""
+    @State private var targetSets: Int = 3
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Edit Exercise")) {
+                    TextField("Exercise Name", text: $name)
+                        .textInputAutocapitalization(.words)
+                    
+                    Stepper("Target Sets: \(targetSets)", value: $targetSets, in: 1...10)
+                }
+            }
+            .navigationTitle("Edit Exercise")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        onDismiss()
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        // Apply changes to the managed object
+                        exercise.exerciseName = name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? exercise.exerciseName : name
+                        exercise.targetSets = Int16(targetSets)
+                        do {
+                            try viewContext.save()
+                        } catch {
+                            print("Error saving edited exercise: \(error)")
+                        }
+                        onDismiss()
+                    }
+                }
+            }
+            .onAppear {
+                name = exercise.exerciseName ?? ""
+                targetSets = Int(exercise.targetSets)
             }
         }
     }

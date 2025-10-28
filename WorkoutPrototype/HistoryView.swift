@@ -1,12 +1,10 @@
 import SwiftUI
 import CoreData
 
-// MARK: - 1. SessionDetailView (The drill-down view)
+// SessionDetailView (The drill-down view)
 // This view shows all the sets logged for a single WorkoutSession.
 
 struct SessionDetailView: View {
-    // We use @ObservedObject because the session object is passed from the HistoryView
-    // and we need SwiftUI to react to changes (though likely not changing here).
     @ObservedObject var session: WorkoutSession
     
     var body: some View {
@@ -26,7 +24,7 @@ struct SessionDetailView: View {
                         ForEach(exerciseSets.indices, id: \.self) { index in
                             let logSet = exerciseSets[index]
                             HStack {
-                                Text("Set \(index + 1):")
+                                Text("Stats:")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                                 
@@ -50,17 +48,17 @@ struct SessionDetailView: View {
 }
 
 
-// MARK: - 2. HistoryView (The main session list view)
+// HistoryView (The main session list view)
 // This view fetches and groups WorkoutSession entities.
 
 struct HistoryView: View {
-    // Fetch all WorkoutSessions, sorted by dateCompleted descending.
+    // Fetch all WorkoutSessions, sort them by dateCompleted descending.
     @FetchRequest(
         sortDescriptors: [SortDescriptor(\.dateCompleted, order: .reverse)],
         animation: .default)
     private var sessions: FetchedResults<WorkoutSession>
     
-    // Date formatters
+    // Helper functions for formatting the Time and Date
     private static let sessionTimeFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .none
@@ -70,12 +68,12 @@ struct HistoryView: View {
     
     private static let dateOnlyFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateStyle = .long // e.g., "October 20, 2025"
+        formatter.dateStyle = .long // Format example, "October 20, 2025"
         formatter.timeStyle = .none
         return formatter
     }()
     
-    // Helper function to group sessions by the calendar day
+    // Helper function to group sessions by the date
     private func sessionsGroupedByDate() -> [Date: [WorkoutSession]] {
         let calendar = Calendar.current
         
@@ -91,7 +89,7 @@ struct HistoryView: View {
     var body: some View {
         NavigationView {
             let groupedSessions = sessionsGroupedByDate()
-            let sortedDates = groupedSessions.keys.sorted(by: >) // Newest date first
+            let sortedDates = groupedSessions.keys.sorted(by: >) // Sort by Ascending 
             
             if sessions.isEmpty {
                 // Empty State
