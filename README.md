@@ -76,3 +76,9 @@ Check out the code, verify the simplicity, and appreciate the execution.
 3.  **Preview Setup:** The project contains both a functional **`preview`** (with sample data) and an **`emptyPreview`** configuration. This separation allows for clean state-testing (empty views) and feature-testing (populating the `HistoryView`), demonstrating proper decoupling of testing environments.
 
 This project proves you don't need complexity to solve a core user problem. You just need thoughtful engineering and respect for the user's intelligence.
+## 📊 UML Diagram
+
+Here’s the Core Data model that powers **LiftLog**, representing the relationships between templates, sessions, exercises, and logged sets.
+
+![LiftLog UML Diagram](./Screenshot%202025-10-27%20at%207.06.00 PM.png)
+
