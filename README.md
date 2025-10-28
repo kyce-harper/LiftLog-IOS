@@ -80,5 +80,6 @@ This project proves you don't need complexity to solve a core user problem. You 
 
 Here’s the Core Data model that powers **LiftLog**, representing the relationships between templates, sessions, exercises, and logged sets.
 
-![LiftLog UML Diagram](./Screenshot%202025-10-27%20at%207.06.00 PM.png)
+![LiftLog UML Diagram](<img width="945" height="1110" alt="Screenshot 2025-10-27 at 7 07 15 PM" src="https://github.com/user-attachments/assets/17d7bb62-0ba7-42f8-a857-65587423bd5b" />
+)
 
