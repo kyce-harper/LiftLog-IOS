@@ -212,4 +212,12 @@ extension PersistenceController {
         newSet.session = session // Link to the current session
         saveContext()
     }
+    
+    // Deletes a WorkoutSession. If your model has Cascade from WorkoutSession -> LoggedSet,
+    // related LoggedSets will be deleted automatically.
+    func deleteSession(_ session: WorkoutSession) {
+        container.viewContext.delete(session)
+        saveContext()
+    }
 }
+

@@ -12,57 +12,98 @@ struct TemplateListView: View {
     private var templates: FetchedResults<WorkoutTemplate>
 
     @State private var showingAddTemplateSheet = false
+    @State private var isEditing = false
     
     // This action is set by the parent view (ContentView) to dismiss the active workout sheet
     let startWorkoutAction: () -> Void
 
     var body: some View {
-        NavigationView {
-            List {
-                // If the list is empty, show a prompt
+        NavigationStack {
+            Group {
                 if templates.isEmpty {
-                    Text("Tap the '+' button to create your first workout template, like 'Leg Day' or 'Push Day'!")
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.gray)
-                        .padding()
-                } else {
-                    // Loop through all saved templates
-                    ForEach(templates) { template in
-                        // NavLink takes us to the screen where exercises are added
-                        NavigationLink {
-                            TemplateBuilderView(template: template)
+                    VStack(spacing: 16) {
+                        Image(systemName: "list.bullet.rectangle")
+                            .font(.system(size: 44))
+                            .foregroundColor(.secondary)
+                        Text("No Templates Yet")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                        Text("Create a template like “Push Day” or “Leg Day” to get started.")
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal)
+                        
+                        Button {
+                            showingAddTemplateSheet = true
                         } label: {
-                            TemplateRow(template: template)
+                            Label("Create Template", systemImage: "plus.circle.fill")
+                                .font(.headline)
                         }
+                        .buttonStyle(.borderedProminent)
+                        .padding(.top, 8)
+                        
+                        Button {
+                            startWorkoutAction()
+                        } label: {
+                            Label("Start Workout", systemImage: "play.circle")
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(true) // Disabled when empty to guide flow
+                        .tint(.gray)
                     }
-                    .onDelete(perform: deleteTemplates)
+                    .padding()
+                } else {
+                    List {
+                        ForEach(templates) { template in
+                            NavigationLink {
+                                TemplateBuilderView(template: template)
+                            } label: {
+                                TemplateRow(template: template)
+                            }
+                        }
+                        .onDelete(perform: deleteTemplates)
+                    }
+                    .environment(\.editMode, .constant(isEditing ? .active : .inactive))
                 }
             }
-            .navigationTitle("Workout Plans")
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    EditButton()
-                }
-                
-                // Button to launch the Active Workout screen (Passed from ContentView)
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Start Workout") {
+                // Leading: optional Start Workout as icon, away from back button on push screens
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
                         startWorkoutAction()
+                    } label: {
+                        Image(systemName: "play.circle.fill")
                     }
+                    .accessibilityLabel("Start Workout")
                 }
                 
+                // Trailing: Add Template
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         showingAddTemplateSheet = true
                     } label: {
-                        Label("Add Template", systemImage: "plus.circle.fill")
+                        Image(systemName: "plus.circle.fill")
                     }
+                    .accessibilityLabel("Add Template")
+                }
+                
+                // Trailing: Edit toggle (moved away from back button area)
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            isEditing.toggle()
+                        }
+                    } label: {
+                        Text(isEditing ? "Done" : "Edit")
+                            .fontWeight(.semibold)
+                    }
+                    .accessibilityLabel(isEditing ? "Done Editing" : "Edit Templates")
                 }
             }
-            // Present the sheet for adding a new template
             .sheet(isPresented: $showingAddTemplateSheet) {
                 AddTemplateView()
             }
+            .navigationTitle("LiftLog")
         }
     }
 
@@ -76,23 +117,21 @@ struct TemplateListView: View {
 
 // MARK: - Helper Views
 
-// A reusable row component for the list
 struct TemplateRow: View {
-    @ObservedObject var template: WorkoutTemplate // Use @ObservedObject for managed objects
+    @ObservedObject var template: WorkoutTemplate
 
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 4) {
             Text(template.name ?? "Untitled Template")
                 .font(.headline)
-            // Display count of exercises
             Text("\(template.exercises?.count ?? 0) exercises defined")
                 .font(.subheadline)
                 .foregroundColor(.gray)
         }
+        .padding(.vertical, 4)
     }
 }
 
-// View for creating a new template (presented as a sheet)
 struct AddTemplateView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.managedObjectContext) private var viewContext
@@ -101,10 +140,11 @@ struct AddTemplateView: View {
     @State private var templateName: String = ""
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 Form {
                     TextField("Template Name (e.g., Pull Day)", text: $templateName)
+                        .textInputAutocapitalization(.words)
                 }
                 Spacer()
             }
@@ -117,16 +157,12 @@ struct AddTemplateView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
-                        // Use PersistenceController function to create and save
                         persistence.createTemplate(name: templateName)
-                        
-                        // Explicitly save the context to force the parent list to refresh immediately
                         do {
                             try viewContext.save()
                         } catch {
                             print("Error saving template: \(error)")
                         }
-                        
                         dismiss()
                     }
                     .disabled(templateName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

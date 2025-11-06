@@ -33,7 +33,7 @@ struct TemplateBuilderView: View {
                     Spacer()
                     // Progressive overload hint: show last logged weight/reps if any
                     if let last = fetchLastPerformance(for: exercise) {
-                        Text("Last: \(String(format: "%.1f", last.weight)) kg x \(last.reps)")
+                        Text("Last: \(String(format: "%.1f", last.weight)) lbs x \(last.reps)")
                             .font(.caption)
                             .foregroundColor(.green)
                     } else {
